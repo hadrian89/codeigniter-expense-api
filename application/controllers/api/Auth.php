@@ -14,7 +14,7 @@ class Auth extends BD_Controller {
         $this->methods['users_get']['limit'] = 500; // 500 requests per hour per user/key
         $this->methods['users_post']['limit'] = 100; // 100 requests per hour per user/key
         $this->methods['users_delete']['limit'] = 50; // 50 requests per hour per user/key
-        $this->load->model('M_main');
+        $this->load->model('Users');
     }
 
     
@@ -26,8 +26,12 @@ class Auth extends BD_Controller {
         $q = array('username' => $u); //For where query condition
         $kunci = $this->config->item('thekey');
         $invalidLogin = ['status' => 'Invalid Login']; //Respon if login invalid
-        $val = $this->M_main->get_user($q)->row(); //Model to get single data row from database base on username
-        if($this->M_main->get_user($q)->num_rows() == 0){$this->response($invalidLogin, REST_Controller::HTTP_NOT_FOUND);}
+        $val = $this->Users->get_user($q)->row(); //Model to get single data row from database base on username
+        
+       
+        if($this->Users->get_user($q)->num_rows() == 0){
+            $this->response($invalidLogin, REST_Controller::HTTP_NOT_FOUND);
+        }
 		$match = $val->password;   //Get password for user from database
         if($p == $match){  //Condition if password matched
         	$token['id'] = $val->id;  //From here
@@ -40,6 +44,43 @@ class Auth extends BD_Controller {
         }
         else {
             $this->set_response($invalidLogin, REST_Controller::HTTP_NOT_FOUND); //This is the respon if failed
+        }
+    }
+
+
+    public function registration_post()
+    {
+        $u = $this->post('username'); //Username Posted
+        $email = $this->post('email');
+        $p = sha1($this->post('password')); //Pasword Posted
+        $q = array('username' => $u); //For where query condition
+        //$kunci = $this->config->item('thekey');
+        $invalidLogin = ['status' => 'Already registered']; //Respon if login invalid
+        
+       
+        if($this->Users->get_user($q)->num_rows() != 0){
+            $this->response($invalidLogin, REST_Controller::HTTP_NOT_FOUND);
+        }
+        $data = array(
+            'username'=>$u,
+            'email'=>$email,
+            'password'=>$p,
+            'status'=>'1',
+            'create_time'=>date('Y-m-d H:i:s')
+        );
+
+        // echo '<pre>';
+        // print_r($data);
+        // exit;
+
+        $val = $this->Users->register($data); //Model to get single data row from database base on username
+        
+        if($val){  //Condition if password matched
+        	$output['userid'] = $val; //This is the output token
+            $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
+        }
+        else {
+            $this->set_response("Error while register", REST_Controller::HTTP_NOT_FOUND); //This is the respon if failed
         }
     }
 
