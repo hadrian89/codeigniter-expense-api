@@ -9,7 +9,9 @@ class Credit_card extends CI_Model{
 	}
 
 	function add($data){
-		return $this->db->insert($this->table,$data);
+		 $this->db->insert($this->table,$data);
+		 $last_id = $this->db->insert_id();
+		return $last_id;
 	}
 
 	function update($where,$data){

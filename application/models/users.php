@@ -9,7 +9,9 @@ class Users extends CI_Model{
 	}
 
 	function register($data){
-		return $this->db->insert($this->table,$data);
+	   $this->db->insert($this->table,$data);
+		$last_id = $this->db->insert_id();
+		return $last_id;
 	}
 
 	function update_user($where,$data){

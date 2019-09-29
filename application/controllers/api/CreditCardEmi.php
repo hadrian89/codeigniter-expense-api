@@ -10,41 +10,65 @@ class CreditCardEmi extends BD_Controller {
         // Construct the parent class
         parent::__construct();
         $this->auth();
-        $this->load->model('Credit_card');
+        $this->load->model('Credit_card_emi');
     }
 
-    public function getcard_post()
+    public function getcardemi_post()
     {
         $userid = $this->post('userid');
 
         $q = array('user_id' => $userid);
-        $val = $this->Credit_card->get_card($q)->result();
-        $invalidUser = ['status' => 'Invalid User'];
-        
-        if($this->Credit_card->get_all($q)->num_rows() == 0){
+        $val = $this->Credit_card_emi->get_all($q)->result_array();
+        $invalidUser = ['status' => 'No record found'];
+
+        if($this->Credit_card_emi->get_all($q)->num_rows() == 0){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
-            $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
+            $newArr = [];
+            $kk=0;
+            $cards = array_unique(array_column($val,'card_bank'));
+            foreach($cards as $v=>$card){
+                $newArr[$kk]['bank']=$card;
+                $newArr2 = [];
+                foreach($val as $k=>$array){
+                    //echo $card.'=>'.$array->card_bank.'<br/>';
+                    if($array['card_bank'] === $card) {
+                    array_push($newArr2,$array);
+                    }
+                }
+                $newArr[$kk]['data']=$newArr2;
+                $kk++;
+            }
+        
+            $this->set_response($newArr, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
 
-    public function addcard_post()
+    public function addemi_post()
     {
         $user_id = $this->post('userid');
-        $bank_name = $this->post('bank_name');
-        $card_number = $this->post('card_number');
-        $credit_limit = $this->post('credit_limit');
-        $available_limit = $this->post('available_limit');
+        $card_id = $this->post('card_id');
+        $card_bank = $this->post('card_bank');
+
+        $description = $this->post('description');
+        $principal_amnt = $this->post('principal_amnt');
+        $emi_amnt = $this->post('emi_amnt');
+        $tenure = $this->post('tenure');
+        $booked_date = $this->post('booked_date');
+        $outstanding_principle = $this->post('outstanding_principle');
         $status = $this->post('status');
 
-        $where = array('user_id' => $userid);
+        $where = array('user_id' => $user_id);
         $data = array(
             'user_id'=>$user_id,
-            'bank_name'=>$bank_name,
-            'card_number'=>$card_number,
-            'credit_limit'=>$credit_limit,
-            'available_limit'=>$available_limit,
+            'card_id'=>$card_id,
+            'card_bank'=>$card_bank,
+            'emi_amnt'=>$emi_amnt,
+            'description'=>$description,
+            'principal_amnt'=>$principal_amnt,
+            'tenure'=>$tenure,
+            'booked_date'=>$booked_date,
+            'outstanding_principle'=>$outstanding_principle,
             'status'=>$status,
         );
     
@@ -52,42 +76,52 @@ class CreditCardEmi extends BD_Controller {
         // print_r($status);
         // exit;
 
-        $q = array('user_id' => $userid);
-        $val = $this->Credit_card->add($data);
-        $invalidUser = ['status' => 'Invalid User'];
+        $q = array('user_id' => $user_id);
+        $val = $this->Credit_card_emi->add($data);
+        $invalidUser = ['status' => 'could not add'];
         
         if(!$val){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
+            $output = $val; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
 
-    public function updatecard_post()
+    public function updateemi_post()
     {
-        $cardid = $this->post('cardid');
-        $bank_name = $this->post('bank_name');
-        $card_number = $this->post('card_number');
-        $credit_limit = $this->post('credit_limit');
-        $available_limit = $this->post('available_limit');
+        $emiid = $this->post('emiid');
+        $user_id = $this->post('userid');
+        $card_id = $this->post('card_id');
+        $card_bank = $this->post('card_bank');
+        $description = $this->post('description');
+        $principal_amnt = $this->post('principal_amnt');
+        $emi_amnt = $this->post('emi_amnt');
+        $tenure = $this->post('tenure');
+        $booked_date = $this->post('booked_date');
+        $outstanding_principle = $this->post('outstanding_principle');
         $status = $this->post('status');
 
-        $where = array('id' => $cardid);
+        $where = array('id' => $emiid);
         $data = array(
-            'bank_name'=>$bank_name,
-            'card_number'=>$card_number,
-            'credit_limit'=>$credit_limit,
-            'available_limit'=>$available_limit,
+            'user_id'=>$user_id,
+            'card_id'=>$card_id,
+            'card_bank'=>$card_bank,
+            'emi_amnt'=>$emi_amnt,
+            'description'=>$description,
+            'principal_amnt'=>$principal_amnt,
+            'tenure'=>$tenure,
+            'booked_date'=>$booked_date,
+            'outstanding_principle'=>$outstanding_principle,
             'status'=>$status,
         );
     
         $invalidUser = ['status' => 'Invalid Task'];
 
-        if($this->Credit_card->update($where,$data)) // call the method from the model
+        if($this->Credit_card_emi->update($where,$data)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
                 $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else
@@ -98,18 +132,18 @@ class CreditCardEmi extends BD_Controller {
 
     }
 
-    public function deletecard_post()
+    public function deleteemi_post()
     {
-        $cardid = $this->post('cardid');
+        $emiid = $this->post('emiid');
        
-        $where = array('id' => $cardid);
+        $where = array('id' => $emiid);
       
         $invalidUser = ['status' => 'Invalid Task'];
 
-        if($this->Credit_card->delete($where)) // call the method from the model
+        if($this->Credit_card_emi->delete($where)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else

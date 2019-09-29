@@ -15,6 +15,7 @@ class Auth extends BD_Controller {
         $this->methods['users_post']['limit'] = 100; // 100 requests per hour per user/key
         $this->methods['users_delete']['limit'] = 50; // 50 requests per hour per user/key
         $this->load->model('Users');
+        $this->load->model('Profile');
     }
 
     
@@ -51,7 +52,7 @@ class Auth extends BD_Controller {
     public function registration_post()
     {
         $u = $this->post('username'); //Username Posted
-        $email = $this->post('email');
+        $mobile = $this->post('mobile');
         $p = sha1($this->post('password')); //Pasword Posted
         $q = array('username' => $u); //For where query condition
         //$kunci = $this->config->item('thekey');
@@ -63,7 +64,7 @@ class Auth extends BD_Controller {
         }
         $data = array(
             'username'=>$u,
-            'email'=>$email,
+            'mobile'=>$mobile,
             'password'=>$p,
             'status'=>'1',
             'create_time'=>date('Y-m-d H:i:s')
@@ -75,7 +76,8 @@ class Auth extends BD_Controller {
 
         $val = $this->Users->register($data); //Model to get single data row from database base on username
         
-        if($val){  //Condition if password matched
+        if($val && $val >0){  //Condition if password matched
+            $this->Profile->add(array('user_id'=>$val));
         	$output['userid'] = $val; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }

@@ -10,7 +10,7 @@ class Main extends BD_Controller {
         $this->auth();
     }
 	
-	public function test_post()
+	public function authenticate_post()
 	{
        
         $theCredential = $this->user_data;

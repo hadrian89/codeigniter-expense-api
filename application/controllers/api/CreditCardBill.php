@@ -10,41 +10,67 @@ class CreditCardBill extends BD_Controller {
         // Construct the parent class
         parent::__construct();
         $this->auth();
-        $this->load->model('Credit_card');
+        $this->load->model('Credit_card_bill');
     }
 
-    public function getcard_post()
+    public function getcardbill_post()
     {
         $userid = $this->post('userid');
 
         $q = array('user_id' => $userid);
-        $val = $this->Credit_card->get_card($q)->result();
-        $invalidUser = ['status' => 'Invalid User'];
-        
-        if($this->Credit_card->get_all($q)->num_rows() == 0){
+        $val = $this->Credit_card_bill->get_all($q)->result_array();
+        $invalidUser = ['status' => 'No record found'];
+
+        if($this->Credit_card_bill->get_all($q)->num_rows() == 0){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
-            $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
+            $newArr = [];
+            $kk=0;
+            $cards = array_unique(array_column($val,'card_bank'));
+            foreach($cards as $v=>$card){
+                $newArr[$kk]['bank']=$card;
+                $newArr2 = [];
+                foreach($val as $k=>$array){
+                    //echo $card.'=>'.$array->card_bank.'<br/>';
+                    if($array['card_bank'] === $card) {
+                    array_push($newArr2,$array);
+                    }
+                }
+                $newArr[$kk]['data']=$newArr2;
+                $kk++;
+            }
+        
+            $this->set_response($newArr, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
 
-    public function addcard_post()
+    public function addbill_post()
     {
+
+
         $user_id = $this->post('userid');
-        $bank_name = $this->post('bank_name');
-        $card_number = $this->post('card_number');
+        $card_id = $this->post('card_id');
+        $card_bank = $this->post('card_bank');
         $credit_limit = $this->post('credit_limit');
         $available_limit = $this->post('available_limit');
+        $total_amnt = $this->post('total_amnt');
+        $min_due = $this->post('min_due');
+        $due_date = $this->post('due_date');
+        $bill_date = $this->post('bill_date');
         $status = $this->post('status');
 
-        $where = array('user_id' => $userid);
+        $where = array('user_id' => $user_id);
         $data = array(
             'user_id'=>$user_id,
-            'bank_name'=>$bank_name,
-            'card_number'=>$card_number,
+            'card_id'=>$card_id,
+            'card_bank'=>$card_bank,
+            'total_amnt'=>$total_amnt,
             'credit_limit'=>$credit_limit,
             'available_limit'=>$available_limit,
+            'total_amnt'=>$total_amnt,
+            'min_due'=>$min_due,
+            'due_date'=>$due_date,
+            'bill_date'=>$bill_date,
             'status'=>$status,
         );
     
@@ -52,42 +78,53 @@ class CreditCardBill extends BD_Controller {
         // print_r($status);
         // exit;
 
-        $q = array('user_id' => $userid);
-        $val = $this->Credit_card->add($data);
-        $invalidUser = ['status' => 'Invalid User'];
+        $q = array('user_id' => $user_id);
+        $val = $this->Credit_card_bill->add($data);
+        $invalidUser = ['status' => 'could not add'];
         
         if(!$val){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
+            $output = $val; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
 
-    public function updatecard_post()
+    public function updatebill_post()
     {
-        $cardid = $this->post('cardid');
-        $bank_name = $this->post('bank_name');
-        $card_number = $this->post('card_number');
+        $billid = $this->post('billid');
+        $user_id = $this->post('userid');
+        $card_id = $this->post('card_id');
+        $card_bank = $this->post('card_bank');
         $credit_limit = $this->post('credit_limit');
         $available_limit = $this->post('available_limit');
+        $total_amnt = $this->post('total_amnt');
+        $min_due = $this->post('min_due');
+        $due_date = $this->post('due_date');
+        $bill_date = $this->post('bill_date');
         $status = $this->post('status');
 
-        $where = array('id' => $cardid);
+        $where = array('id' => $billid);
         $data = array(
-            'bank_name'=>$bank_name,
-            'card_number'=>$card_number,
+            'user_id'=>$user_id,
+            'card_id'=>$card_id,
+            'card_bank'=>$card_bank,
+            'total_amnt'=>$total_amnt,
             'credit_limit'=>$credit_limit,
             'available_limit'=>$available_limit,
+            'total_amnt'=>$total_amnt,
+            'min_due'=>$min_due,
+            'due_date'=>$due_date,
+            'bill_date'=>$bill_date,
             'status'=>$status,
         );
     
         $invalidUser = ['status' => 'Invalid Task'];
 
-        if($this->Credit_card->update($where,$data)) // call the method from the model
+        if($this->Credit_card_bill->update($where,$data)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
                 $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else
@@ -98,18 +135,18 @@ class CreditCardBill extends BD_Controller {
 
     }
 
-    public function deletecard_post()
+    public function deletebill_post()
     {
-        $cardid = $this->post('cardid');
+        $billid = $this->post('billid');
        
-        $where = array('id' => $cardid);
+        $where = array('id' => $billid);
       
         $invalidUser = ['status' => 'Invalid Task'];
 
-        if($this->Credit_card->delete($where)) // call the method from the model
+        if($this->Credit_card_bill->delete($where)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else

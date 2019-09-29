@@ -18,13 +18,13 @@ class CreditCard extends BD_Controller {
         $userid = $this->post('userid');
 
         $q = array('user_id' => $userid);
-        $val = $this->Credit_card->get_card($q)->result();
-        $invalidUser = ['status' => 'Invalid User'];
+        $val = $this->Credit_card->get_all($q)->result();
+        $invalidUser = ['status' => 'No card found'];
         
         if($this->Credit_card->get_all($q)->num_rows() == 0){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
+            $output = $val; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
@@ -36,6 +36,9 @@ class CreditCard extends BD_Controller {
         $card_number = $this->post('card_number');
         $credit_limit = $this->post('credit_limit');
         $available_limit = $this->post('available_limit');
+        $card_type = $this->post('card_type');
+        $due_date = $this->post('due_date');
+        $bill_date = $this->post('bill_date');
         $status = $this->post('status');
 
         $where = array('user_id' => $userid);
@@ -45,6 +48,9 @@ class CreditCard extends BD_Controller {
             'card_number'=>$card_number,
             'credit_limit'=>$credit_limit,
             'available_limit'=>$available_limit,
+            'card_type'=>$card_type,
+            'due_date'=>$due_date,
+            'bill_date'=>$bill_date,
             'status'=>$status,
         );
     
@@ -55,7 +61,7 @@ class CreditCard extends BD_Controller {
         if(!$val){
             $this->response($invalidUser, REST_Controller::HTTP_NOT_FOUND);
         }else{
-            $output['cards'] = $val; //This is the output token
+            $output = $val; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
     }
@@ -67,6 +73,9 @@ class CreditCard extends BD_Controller {
         $card_number = $this->post('card_number');
         $credit_limit = $this->post('credit_limit');
         $available_limit = $this->post('available_limit');
+        $card_type = $this->post('card_type');
+        $due_date = $this->post('due_date');
+        $bill_date = $this->post('bill_date');
         $status = $this->post('status');
 
         $where = array('id' => $cardid);
@@ -75,15 +84,19 @@ class CreditCard extends BD_Controller {
             'card_number'=>$card_number,
             'credit_limit'=>$credit_limit,
             'available_limit'=>$available_limit,
+            'card_type'=>$card_type,
+            'due_date'=>$due_date,
+            'bill_date'=>$bill_date,
             'status'=>$status,
         );
-    
+
+       
         $invalidUser = ['status' => 'Invalid Task'];
 
         if($this->Credit_card->update($where,$data)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
                 $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else
@@ -97,15 +110,16 @@ class CreditCard extends BD_Controller {
     public function deletecard_post()
     {
         $cardid = $this->post('cardid');
+        $user_id = $this->post('user_id');
        
-        $where = array('id' => $cardid);
+        $where = array('id' => $cardid ,'user_id'=>$user_id);
       
         $invalidUser = ['status' => 'Invalid Task'];
 
         if($this->Credit_card->delete($where)) // call the method from the model
         {
             // update successful
-            $output['cards'] = 'success'; //This is the output token
+            $output = 'success'; //This is the output token
             $this->set_response($output, REST_Controller::HTTP_OK); //This is the respon if success
         }
         else
